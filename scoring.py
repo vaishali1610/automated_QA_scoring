@@ -5,10 +5,7 @@ import pandas as pd
 def calculate_scores(df):
 
     total_rows = len(df)
-
-    # -----------------------------
-    # COMPLETENESS SCORE
-    # -----------------------------
+    # ------------------------COMPLETENESS SCORE-----------------------
     total_cells = df.shape[0] * df.shape[1]
     null_cells = df.isnull().sum().sum()
 
@@ -16,18 +13,14 @@ def calculate_scores(df):
         (total_cells - null_cells) / total_cells
     ) * 100
 
-    # -----------------------------
-    # CONSISTENCY SCORE
-    # -----------------------------
+    # ------------CONSISTENCY SCORE---------------------
     duplicate_rows = df.duplicated().sum()
 
     consistency_score = (
         (total_rows - duplicate_rows) / total_rows
     ) * 100
 
-    # -----------------------------
-    # ACCURACY SCORE
-    # -----------------------------
+    # -----------ACCURACY SCORE--------------
     invalid_age_count = len(
         df[(df["age"] < 0) | (df["age"] > 120)]
     )
@@ -37,9 +30,7 @@ def calculate_scores(df):
         / total_rows
     ) * 100
 
-    # -----------------------------
-    # TIMELINESS SCORE
-    # -----------------------------
+    # -------TIMELINESS SCORE------------
     stale_rows = 0
     today = datetime.today()
 
@@ -62,9 +53,7 @@ def calculate_scores(df):
         / total_rows
     ) * 100
 
-    # -----------------------------
     # OVERALL TRUST SCORE
-    # -----------------------------
     trust_score = (
         completeness_score
         + consistency_score

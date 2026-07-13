@@ -1,11 +1,20 @@
-import google.generativeai as genai
+import time
+
+from google import genai
+from google.genai import errors
 from config import GEMINI_API_KEY
 
-# Configure Gemini
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Load model
-model = genai.GenerativeModel("models/gemini-3.5-flash")
+# Tried in order. If one is retired/unavailable/overloaded, the next is used.
+MODEL_FALLBACKS = [
+    "gemini-2.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+]
+
+MAX_RETRIES_PER_MODEL = 2  # quick retries before moving to the next model
+BASE_BACKOFF_SECONDS = 2   # 2s, 4s, ...
 
 
 def generate_report(profile, validation, scores, prediction):
@@ -48,6 +57,36 @@ Sections:
 3. Recommendations
 """
 
-    response = model.generate_content(prompt)
+    last_error = None
 
-    return response.text
+    for model_name in MODEL_FALLBACKS:
+        for attempt in range(1, MAX_RETRIES_PER_MODEL + 1):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                return response.text
+
+            except errors.ClientError as e:
+                # e.g. 404 model retired/not found - no point retrying this model
+                print(f"{model_name} unavailable ({e}). Trying next model...")
+                last_error = e
+                break
+
+            except errors.ServerError as e:
+                # e.g. 503 overloaded - worth a couple of quick retries first
+                last_error = e
+                if attempt < MAX_RETRIES_PER_MODEL:
+                    wait_time = BASE_BACKOFF_SECONDS ** attempt
+                    print(
+                        f"{model_name} busy (attempt {attempt}/{MAX_RETRIES_PER_MODEL}), "
+                        f"retrying in {wait_time}s..."
+                    )
+                    time.sleep(wait_time)
+                else:
+                    print(f"{model_name} still unavailable after retries. Trying next model...")
+
+    raise RuntimeError(
+        f"All Gemini models failed. Last error: {last_error}"
+    )

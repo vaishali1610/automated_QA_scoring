@@ -1,0 +1,2 @@
+Dataset,Total Rows,Total Columns,Null Count,Duplicate Count,Completeness,Consistency,Accuracy,Timeliness,Trust Score,Predicted Quality
+bad.csv,9999999999999999,5,4,1,80.0,95.0,95.0,0.0,59.5,Moderate
