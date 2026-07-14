@@ -9,29 +9,32 @@ def test_validation_returns_dictionary():
     result = validate_dataset(df)
     assert isinstance(result, dict)
 
+from gx_validation import find_column
 
-def test_all_expected_rules_exist():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
+
+def test_validation_contains_expected_keys():
+
+    df = ge.from_pandas(load_dataset("data/good.csv"))
+
     result = validate_dataset(df)
-    expected_rules = [
+
+    expected = [
         "ID Not Null",
         "Name Not Null",
         "Email Not Null",
         "City Not Null",
-        "DOB Not Null",
-        "Last Updated Not Null",
+        "Date Not Null",
         "ID Unique",
         "Age Datatype",
         "Age Between 0-120",
-        "Salary Positive",
+        "Positive Numeric",
         "Email Format",
         "Phone Format",
         "Gender Valid"
     ]
 
-    for rule in expected_rules:
-        assert rule in result
-
+    for key in expected:
+        assert key in result
 
 def test_good_dataset_has_more_passes_than_bad_dataset():
     good_df = ge.from_pandas(load_dataset("data/good.csv"))

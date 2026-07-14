@@ -2,11 +2,11 @@ import os
 import pandas as pd
 import great_expectations as ge
 from pycaret.classification import load_model, predict_model
-import os
-os.makedirs("exports", exist_ok=True)
+
 from ingestion import load_dataset
 from profiling import profile_dataset
 from scoring import calculate_scores
+from dashboard_export import export_dashboard
 
 from database import (
     create_tables,
@@ -19,27 +19,47 @@ from gx_validation import (
     print_validation_report
 )
 
-from gemini_ai import generate_report
+# Uncomment later
+# from gemini_ai import generate_report
 
+
+# -----------------------------------------------------
 # Create Database Tables
+# -----------------------------------------------------
 create_tables()
 
+# -----------------------------------------------------
 # Dataset
-dataset_name = "bad.csv"
+# -----------------------------------------------------
+dataset_name = "medium.csv"
 
+# -----------------------------------------------------
+# Load Dataset
+# -----------------------------------------------------
 df = load_dataset(f"data/{dataset_name}")
+
+# -----------------------------------------------------
+# Dataset Profiling
+# -----------------------------------------------------
 profile = profile_dataset(df)
 
+# -----------------------------------------------------
 # Great Expectations Validation
+# -----------------------------------------------------
 gx_df = ge.from_pandas(df)
 
 validation = validate_dataset(gx_df)
 
+# Optional: Print validation report
+# print_validation_report(validation)
+
+# -----------------------------------------------------
 # Calculate Quality Scores
+# -----------------------------------------------------
 scores = calculate_scores(df)
 
-
-# Save Results
+# -----------------------------------------------------
+# Save Results to SQLite
 # -----------------------------------------------------
 save_profiling(dataset_name, profile)
 save_scores(dataset_name, scores)
@@ -67,9 +87,10 @@ prediction = predict_model(
 predicted_quality = prediction.loc[0, "prediction_label"]
 
 # -----------------------------------------------------
-# Generate Gemini AI Report
+# Export Dashboard Data
 # -----------------------------------------------------
-ai_report = generate_report(
+export_dashboard(
+    dataset_name,
     profile,
     validation,
     scores,
@@ -77,14 +98,23 @@ ai_report = generate_report(
 )
 
 # -----------------------------------------------------
-# Save AI Report
+# Gemini AI (Temporarily Disabled)
 # -----------------------------------------------------
+"""
+ai_report = generate_report(
+    profile,
+    validation,
+    scores,
+    predicted_quality
+)
+
 os.makedirs("outputs", exist_ok=True)
 
 report_path = f"outputs/{dataset_name}_ai_report.md"
 
 with open(report_path, "w", encoding="utf-8") as file:
     file.write(ai_report)
+"""
 
 # -----------------------------------------------------
 # Console Output
@@ -99,7 +129,7 @@ for key, value in profile.items():
 
 print("\nVALIDATION")
 for key, value in validation.items():
-    print(f"{key:<20}: {value}")
+    print(f"{key:<35}: {value}")
 
 print("\nQUALITY SCORES")
 print(f"Completeness     : {scores['completeness']:.2f}%")
@@ -111,35 +141,5 @@ print(f"Trust Score      : {scores['trust_score']:.2f}%")
 print("\nML CLASSIFICATION")
 print(f"Dataset Quality  : {predicted_quality}")
 
-print("\nAI GENERATED REPORT")
-print("=" * 60)
-print(ai_report)
-
-print(f"\nAI report saved to: {report_path}")
-
 print("\nResults successfully saved to SQLite.")
 print("=" * 60)
-
-
-dashboard_df = pd.DataFrame([
-    {
-        "Dataset": dataset_name,
-        "Total Rows": profile["total_rows"],
-        "Total Columns": profile["total_columns"],
-        "Null Count": profile["null_count"],
-        "Duplicate Count": profile["duplicate_count"],
-        "Completeness": scores["completeness"],
-        "Consistency": scores["consistency"],
-        "Accuracy": scores["accuracy"],
-        "Timeliness": scores["timeliness"],
-        "Trust Score": scores["trust_score"],
-        "Predicted Quality": predicted_quality
-    }
-])
-
-dashboard_df.to_csv(
-    "exports/dashboard_data.csv",
-    index=False
-)
-
-print("Dashboard data exported successfully.")
