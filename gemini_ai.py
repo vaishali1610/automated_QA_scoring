@@ -35,7 +35,6 @@ Quality Scores:
 Completeness: {scores['completeness']}%
 Consistency: {scores['consistency']}%
 Accuracy: {scores['accuracy']}%
-Timeliness: {scores['timeliness']}%
 Trust Score: {scores['trust_score']}%
 
 Predicted Dataset Quality:

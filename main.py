@@ -19,54 +19,31 @@ from gx_validation import (
     print_validation_report
 )
 
-# Uncomment later
-# from gemini_ai import generate_report
 
+from gemini_ai import generate_report
+from hugging_face_ai import generate_report_hf
 
-# -----------------------------------------------------
-# Create Database Tables
-# -----------------------------------------------------
+import sys
+
 create_tables()
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "bad.csv"
+print(f"Running pipeline on: {dataset_name}")
 
-# -----------------------------------------------------
-# Dataset
-# -----------------------------------------------------
-dataset_name = "medium.csv"
-
-# -----------------------------------------------------
-# Load Dataset
-# -----------------------------------------------------
 df = load_dataset(f"data/{dataset_name}")
 
-# -----------------------------------------------------
-# Dataset Profiling
-# -----------------------------------------------------
+
 profile = profile_dataset(df)
 
-# -----------------------------------------------------
-# Great Expectations Validation
-# -----------------------------------------------------
 gx_df = ge.from_pandas(df)
 
 validation = validate_dataset(gx_df)
 
-# Optional: Print validation report
-# print_validation_report(validation)
-
-# -----------------------------------------------------
-# Calculate Quality Scores
-# -----------------------------------------------------
 scores = calculate_scores(df)
 
-# -----------------------------------------------------
-# Save Results to SQLite
-# -----------------------------------------------------
 save_profiling(dataset_name, profile)
 save_scores(dataset_name, scores)
 
-# -----------------------------------------------------
-# Load ML Model
-# -----------------------------------------------------
+
 model = load_model("dataset_quality_model")
 
 prediction_input = pd.DataFrame([
@@ -86,9 +63,6 @@ prediction = predict_model(
 
 predicted_quality = prediction.loc[0, "prediction_label"]
 
-# -----------------------------------------------------
-# Export Dashboard Data
-# -----------------------------------------------------
 export_dashboard(
     dataset_name,
     profile,
@@ -97,16 +71,28 @@ export_dashboard(
     predicted_quality
 )
 
-# -----------------------------------------------------
-# Gemini AI (Temporarily Disabled)
-# -----------------------------------------------------
-"""
-ai_report = generate_report(
-    profile,
-    validation,
-    scores,
-    predicted_quality
-)
+
+
+try:
+    ai_report = generate_report(
+        profile,
+        validation,
+        scores,
+        predicted_quality
+    )
+    ai_source = "Gemini"
+
+except Exception as e:
+    # Covers missing/invalid GEMINI_API_KEY, quota exceeded, network
+    # errors, or all fallback Gemini models failing (see gemini_ai.py).
+    print(f"Gemini unavailable ({e}). Falling back to local HuggingFace model...")
+    ai_report = generate_report_hf(
+        profile,
+        validation,
+        scores,
+        predicted_quality
+    )
+    ai_source = "HuggingFace (local fallback)"
 
 os.makedirs("outputs", exist_ok=True)
 
@@ -114,11 +100,10 @@ report_path = f"outputs/{dataset_name}_ai_report.md"
 
 with open(report_path, "w", encoding="utf-8") as file:
     file.write(ai_report)
-"""
 
-# -----------------------------------------------------
-# Console Output
-# -----------------------------------------------------
+print(f"\nAI report generated using: {ai_source}")
+print(f"Report saved to: {report_path}")
+
 print("\n" + "=" * 60)
 print("           DATA QUALITY ASSESSMENT REPORT")
 print("=" * 60)
@@ -137,6 +122,10 @@ print(f"Consistency      : {scores['consistency']:.2f}%")
 print(f"Accuracy         : {scores['accuracy']:.2f}%")
 print(f"Timeliness       : {scores['timeliness']:.2f}%")
 print(f"Trust Score      : {scores['trust_score']:.2f}%")
+
+print("\nINFERRED COLUMN ROLES (schema-agnostic detection)")
+for col, role in scores.get("inferred_roles", {}).items():
+    print(f"{col:<20}: {role}")
 
 print("\nML CLASSIFICATION")
 print(f"Dataset Quality  : {predicted_quality}")

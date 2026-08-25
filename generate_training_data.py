@@ -8,16 +8,16 @@ def generate_row(quality):
         low, high = 75, 89
     elif quality == "Moderate":
         low, high = 60, 74
-    else:  # Poor
-        low, high = 40, 59
+    else:  # Poor - widened to 0 so the model has seen genuinely broken data
+        low, high = 0, 59
 
     # generate 4 scores whose average lands in the target band
     target_avg = random.uniform(low, high)
-    # small spread around the target average, clipped to valid range
-    completeness = round(min(100, max(40, target_avg + random.uniform(-8, 8))))
-    consistency  = round(min(100, max(40, target_avg + random.uniform(-8, 8))))
-    accuracy     = round(min(100, max(40, target_avg + random.uniform(-8, 8))))
-    timeliness   = round(min(100, max(40, target_avg + random.uniform(-8, 8))))
+    # small spread around the target average, clipped to valid 0-100 range
+    completeness = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
+    consistency  = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
+    accuracy     = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
+    timeliness   = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
 
     trust_score = round((completeness + consistency + accuracy + timeliness) / 4, 2)
     return [completeness, consistency, accuracy, timeliness, trust_score, quality]
