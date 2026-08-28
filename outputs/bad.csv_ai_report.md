@@ -1,41 +1,20 @@
-# 1. Overall Summary
+# Data Quality Report (HuggingFace fallback)
 
-The dataset shows a Moderate quality status.
+*Generated locally using google/flan-t5-small because Gemini was unavailable.*
 
-The overall Trust Score is 57.5%.
+## Overall Summary
 
-There are significant issues with data completeness and integrity.
+Dataset quality is moderately rated and rated as a low-cost, non-competitive, and low-cost, non-competitive, and low-cost, non-competitive, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost, and low-cost
 
-The presence of duplicates suggests poor data entry controls.
+## Major Data Quality Issues
 
-Timeliness metrics are currently at 0.0%.
+- Completeness: 80.00%
+- Consistency: 75.00%
+- Accuracy: 87.50%
+- Timeliness: 0.00%
 
+## Recommendations
 
-# 2. Major Data Quality Issues
-
-The dataset contains 4 null values across 5 columns.
-
-One duplicate row exists, affecting unique record integrity.
-
-The 'ID' field fails the uniqueness constraint.
-
-Several critical fields like Name and Email have null values.
-
-The Age field contains values outside the 0-120 range.
-
-Timeliness data is entirely missing from the profile.
-
-
-# 3. Recommendations
-
-Remove duplicate rows to ensure record uniqueness.
-
-Implement mandatory fields for Name, Email, and City.
-
-Add validation rules for Age to restrict values between 0-120.
-
-Update the system to record the 'Last Updated' timestamp.
-
-Standardize input formats for Phone and Salary fields.
-
-Automate a data cleaning pipeline to handle null values.
+- Review columns driving the lowest dimension score first.
+- Re-run validation after fixes to confirm the trust score improves.
+- Predicted dataset quality: **Moderate**

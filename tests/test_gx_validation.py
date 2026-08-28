@@ -1,88 +1,38 @@
 import great_expectations as ge
-
 from ingestion import load_dataset
 from gx_validation import validate_dataset
 
 
-def test_validation_returns_dictionary():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert isinstance(result, dict)
-
-from gx_validation import find_column
+def test_validation_accepts_pandas_and_ge_validator():
+    df = load_dataset("data/good.csv")
+    assert isinstance(validate_dataset(df), dict)
+    assert isinstance(validate_dataset(ge.from_pandas(df)), dict)
 
 
-def test_validation_contains_expected_keys():
-
-    df = ge.from_pandas(load_dataset("data/good.csv"))
-
+def test_schema_agnostic_validation_has_core_rules():
+    df = load_dataset("data/good.csv")
     result = validate_dataset(df)
 
-    expected = [
-        "ID Not Null",
-        "Name Not Null",
-        "Email Not Null",
-        "City Not Null",
-        "Date Not Null",
-        "ID Unique",
-        "Age Datatype",
-        "Age Between 0-120",
-        "Positive Numeric",
-        "Email Format",
-        "Phone Format",
-        "Gender Valid"
-    ]
+    assert "id - Not Null" in result
+    assert "id - Numeric Format Valid" in result
+    assert "email - Not Null" in result
+    assert "email - Valid Email Format" in result
+    assert "amount - Not Null" in result
+    assert "amount - Numeric Format Valid" in result
+    assert "date - Not Null" in result
+    assert "date - Valid Date Format" in result
+    assert "Dataset Not Empty" in result
+    assert "No Fully Duplicate Rows" in result
 
-    for key in expected:
-        assert key in result
-
-def test_good_dataset_has_more_passes_than_bad_dataset():
-    good_df = ge.from_pandas(load_dataset("data/good.csv"))
-    bad_df = ge.from_pandas(load_dataset("data/bad.csv"))
-    good_result = validate_dataset(good_df)
-    bad_result = validate_dataset(bad_df)
-    good_passes = sum(value is True for value in good_result.values())
-    bad_passes = sum(value is True for value in bad_result.values())
-    assert good_passes >= bad_passes
+def test_bad_dataset_has_more_failures_than_good_dataset():
+    good = validate_dataset(load_dataset("data/good.csv"))
+    bad = validate_dataset(load_dataset("data/bad.csv"))
+    good_failures = sum(value is False for value in good.values())
+    bad_failures = sum(value is False for value in bad.values())
+    assert bad_failures >= good_failures
 
 
-def test_null_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Name Not Null"] in [True, False, None]
-
-
-def test_duplicate_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["ID Unique"] in [True, False, None]
-
-
-def test_age_datatype_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Age Datatype"] in [True, False, None]
-
-
-def test_age_range_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Age Between 0-120"] in [True, False, None]
-
-
-def test_email_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Email Format"] in [True, False, None]
-
-
-def test_phone_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Phone Format"] in [True, False, None]
-
-
-def test_gender_validation_exists():
-    df = ge.from_pandas(load_dataset("data/bad.csv"))
-    result = validate_dataset(df)
-    assert result["Gender Valid"] in [True, False, None]
+def test_worst_case_is_rejected():
+    result = validate_dataset(load_dataset("data/worst_case.csv"))
+    assert any(value is False for value in result.values())
+    assert result["No Fully Duplicate Rows"] is False

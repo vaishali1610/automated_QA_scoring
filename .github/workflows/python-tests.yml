@@ -9,7 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,8 +23,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Tests
+      - name: Generate deterministic training data
+        run: python generate_training_data.py
+
+      - name: Train and evaluate ML model
+        run: python train_model.py
+
+      - name: Run full test suite with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest tests/
+          coverage run -m pytest -q
+          coverage report --fail-under=80

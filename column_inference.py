@@ -80,12 +80,19 @@ def infer_column_roles(df, id_threshold=0.9, datetime_threshold=0.7,
             roles[col] = "text"  # can't infer anything, treat conservatively
             continue
 
+        # Native datetime columns must be recognized before numeric parsing.
+        # Pandas can coerce datetime64 values to integers, which would otherwise
+        # make a datetime column look numeric and break timeliness scoring.
+        if pd.api.types.is_datetime64_any_dtype(series):
+            roles[col] = "datetime"
+            continue
+
         # Email — very specific text pattern, check first
         if pd.api.types.is_string_dtype(series) and _email_match_rate(series) > 0.7:
             roles[col] = "email"
             continue
 
-        # Numeric — checked early. Dates never falsely parse as pure
+        # Numeric — checked early for ordinary numeric columns. Dates never falsely
         # numbers (pd.to_numeric correctly rejects "2024-05-01"), so
         # this order is safe and protects numeric columns from being
         # swallowed by the more permissive datetime parser below.

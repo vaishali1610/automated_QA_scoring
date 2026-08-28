@@ -57,6 +57,32 @@ def create_tables():
     )
     """)
 
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS dashboard_data (
+        id INTEGER PRIMARY KEY,
+        timestamp TEXT,
+        dataset TEXT,
+        run_number INTEGER,
+        total_rows INTEGER,
+        total_columns INTEGER,
+        null_count INTEGER,
+        duplicate_count INTEGER,
+        passed_rules INTEGER,
+        failed_rules INTEGER,
+        validation_rate REAL,
+        failed_checks TEXT,
+        completeness REAL,
+        consistency REAL,
+        accuracy REAL,
+        timeliness REAL,
+        trust_score REAL,
+        historical_avg_trust_score REAL,
+        trust_score_anomaly TEXT,
+        predicted_quality TEXT,
+        is_latest_run INTEGER
+    )
+    """)
     conn.commit()
     conn.close()
 
@@ -146,6 +172,7 @@ def save_pipeline_run(dataset_name, profile, validation, scores, predicted_quali
     CSV is a disposable, regeneratable VIEW of this table, not a
     second independent store.
     """
+    create_tables()
     executed = sum(v is not None for v in validation.values())
     passed = sum(v is True for v in validation.values())
     failed = sum(v is False for v in validation.values())
@@ -202,3 +229,33 @@ def view_table(table_name):
     for row in rows:
         print(row)
     conn.close()
+
+def replace_dashboard_data(rows):
+    """Replace the SQL dashboard snapshot with data regenerated from pipeline_runs."""
+    create_tables()
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM dashboard_data")
+    if rows:
+        cursor.executemany("""
+            INSERT INTO dashboard_data (
+                id, timestamp, dataset, run_number, total_rows, total_columns,
+                null_count, duplicate_count, passed_rules, failed_rules,
+                validation_rate, failed_checks, completeness, consistency, accuracy,
+                timeliness, trust_score, historical_avg_trust_score,
+                trust_score_anomaly, predicted_quality, is_latest_run
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, rows)
+    conn.commit()
+    conn.close()
+
+
+def get_dashboard_data():
+    create_tables()
+    conn = sqlite3.connect(DATABASE_NAME)
+    conn.row_factory = sqlite3.Row
+    rows = [dict(row) for row in conn.execute(
+        "SELECT * FROM dashboard_data ORDER BY id"
+    ).fetchall()]
+    conn.close()
+    return rows

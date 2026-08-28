@@ -2,7 +2,7 @@ import os
 import statistics
 import pandas as pd
 
-from database import save_pipeline_run, get_all_pipeline_runs
+from database import save_pipeline_run, get_all_pipeline_runs, replace_dashboard_data
 
 
 def _compute_trend_fields(runs_for_dataset):
@@ -104,6 +104,19 @@ def export_dashboard(
     os.makedirs("dashboards", exist_ok=True)
     dashboard_df = pd.DataFrame(display_rows)
     dashboard_df.to_csv("dashboards/dashboard_data.csv", index=False)
+
+    sql_rows = []
+    for r in final_rows:
+        sql_rows.append((
+            r["id"], r["created_at"], r["dataset_name"], r["Run Number"],
+            r["total_rows"], r["total_columns"], r["null_count"], r["duplicate_count"],
+            r["passed_rules"], r["failed_rules"], r["validation_rate"], r["failed_checks"],
+            r["completeness"], r["consistency"], r["accuracy"], r["timeliness"],
+            r["trust_score"],
+            None if r["Historical Avg Trust Score"] == "N/A" else r["Historical Avg Trust Score"],
+            r["Trust Score Anomaly"], r["predicted_quality"], int(r["Is Latest Run"])
+        ))
+    replace_dashboard_data(sql_rows)
 
     print(f"Dashboard rebuilt from SQLite successfully. ({len(display_rows)} total runs across "
           f"{len(by_dataset)} dataset(s))")

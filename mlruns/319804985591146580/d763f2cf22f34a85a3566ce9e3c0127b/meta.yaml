@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/vaishali.balasubrama/Downloads/automated_QA_scoring_FIXED/automated_QA_scoring/mlruns/319804985591146580/d763f2cf22f34a85a3566ce9e3c0127b/artifacts
+end_time: 1787563938556
+entry_point_name: ''
+experiment_id: '319804985591146580'
+lifecycle_stage: active
+run_id: d763f2cf22f34a85a3566ce9e3c0127b
+run_name: PyCaret_Best_Model
+run_uuid: d763f2cf22f34a85a3566ce9e3c0127b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1787563888567
+status: 3
+tags: []
+user_id: vaishali.balasubrama

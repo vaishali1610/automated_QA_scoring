@@ -1,174 +1,133 @@
 import pandas as pd
+import great_expectations as ge
 from column_inference import infer_column_roles, EMAIL_RE, PHONE_RE
 
-
-# Domain-specific overrides — used ONLY when a column happens to be
-# named one of these, so we get a real, meaningful range (age 0-120)
-# instead of a purely statistical guess for well-known fields.
-# Every other numeric column still gets checked generically via IQR.
-NAMED_OVERRIDES = {
-    "age": {"min": 0, "max": 120},
-}
+NAMED_OVERRIDES = {"age": {"min": 0, "max": 120}}
 
 
 def _no_case_whitespace_duplicates(series):
-    """
-    Flags categorical inconsistency: 'Male' / 'male' / ' Male ' being
-    treated as different categories when they're really the same value.
-    Returns True (passes) only if normalizing case/whitespace doesn't
-    collapse the category set — i.e. no inconsistent variants exist.
-    """
     non_null = series.dropna().astype(str)
     if len(non_null) == 0:
         return True
-    original_unique = non_null.nunique()
-    normalized_unique = non_null.str.strip().str.lower().nunique()
-    return original_unique == normalized_unique
+    return non_null.nunique() == non_null.str.strip().str.lower().nunique()
 
 
-def validate_dataset(df):
-    """
-    Schema-agnostic validation: infers each column's role from its
-    DATA (not its name), then applies the checks appropriate to that
-    role. Works on any dataset regardless of column naming.
-    """
+def _validator_dataframe(data):
+    if isinstance(data, pd.DataFrame):
+        return data
+    # Great Expectations Validator keeps the underlying dataframe in the
+    # active batch. This path lets callers pass ge.from_pandas(df) too.
+    try:
+        return data.active_batch.data.dataframe
+    except AttributeError as exc:
+        raise TypeError("validate_dataset expects a pandas DataFrame or GE Validator") from exc
+
+
+def _gx_expectation(validator, method, **kwargs):
+    """Run one Great Expectations expectation and return its success flag."""
+    result = getattr(validator, method)(**kwargs)
+    return bool(result["success"])
+
+
+def validate_dataset(data):
+    """Run schema-agnostic data-quality rules using Pandas + Great Expectations."""
+    df = _validator_dataframe(data)
+    validator = data if not isinstance(data, pd.DataFrame) else ge.from_pandas(df)
     checks = {}
     roles = infer_column_roles(df)
     total_rows = len(df)
 
-    def add_check(name, applicable, check_fn):
-        """
-        applicable=False -> the check doesn't apply here -> None (skipped)
-        applicable=True, check_fn() raises  -> False (treated as a failure)
-        applicable=True, check_fn() returns bool -> that result
-        """
+    def add(name, fn, applicable=True):
         if not applicable:
             checks[name] = None
             return
         try:
-            checks[name] = bool(check_fn())
+            checks[name] = bool(fn())
         except Exception:
             checks[name] = False
 
-    # ---------------- PER-COLUMN CHECKS (based on inferred role) ----------------
     for col, role in roles.items():
-        series = df[col]
         label = str(col)
-
-        # Applies to every column regardless of role
-        add_check(
-            f"{label} - Not Null",
-            True,
-            lambda s=series: s.notna().all()
-        )
+        add(f"{label} - Not Null", lambda c=col: _gx_expectation(
+            validator, "expect_column_values_to_not_be_null", column=c
+        ))
 
         if role == "id":
-            add_check(
-                f"{label} - Unique",
-                True,
-                lambda s=series: s.dropna().is_unique
-            )
+            add(f"{label} - Unique", lambda c=col: _gx_expectation(
+                validator, "expect_column_values_to_be_unique", column=c
+            ))
 
         elif role == "numeric":
-            numeric_vals = pd.to_numeric(series, errors="coerce")
+            add(f"{label} - Numeric Format Valid", lambda c=col: _gx_expectation(
+                validator, "expect_column_values_to_be_in_type_list", column=c,
+                type_list=["int64", "int32", "float64", "float32"]
+            ), applicable=pd.api.types.is_numeric_dtype(df[col]))
 
-            add_check(
-                f"{label} - Numeric Format Valid",
-                True,
-                lambda s=series: pd.to_numeric(s, errors="coerce").notna().sum() == s.notna().sum()
-            )
-
+            numeric_vals = pd.to_numeric(df[col], errors="coerce")
             override = NAMED_OVERRIDES.get(label.strip().lower())
             if override:
-                add_check(
-                    f"{label} - Within Expected Range ({override['min']}-{override['max']})",
-                    True,
-                    lambda v=numeric_vals, o=override: v.dropna().between(o["min"], o["max"]).all()
-                )
+                add(f"{label} - Within Expected Range ({override['min']}-{override['max']})",
+                    lambda c=col, o=override: _gx_expectation(
+                        validator, "expect_column_values_to_be_between", column=c,
+                        min_value=o["min"], max_value=o["max"], mostly=1.0
+                    ))
             else:
                 valid_vals = numeric_vals.dropna()
-                enough_data = len(valid_vals) >= 4  # need this many points for quartiles to mean anything
-                if enough_data:
+                if len(valid_vals) >= 4:
                     q1, q3 = valid_vals.quantile(0.25), valid_vals.quantile(0.75)
                     iqr = q3 - q1
                     lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-                add_check(
-                    f"{label} - No Statistical Outliers (IQR)",
-                    enough_data,
-                    lambda v=numeric_vals, lo=(lower if enough_data else None), hi=(upper if enough_data else None):
-                        v.dropna().between(lo, hi).all()
-                )
+                    if iqr > 0:
+                        add(f"{label} - No Statistical Outliers (IQR)",
+                            lambda c=col, lo=lower, hi=upper: _gx_expectation(
+                                validator, "expect_column_values_to_be_between", column=c,
+                                min_value=lo, max_value=hi, mostly=1.0
+                            ))
+                    else:
+                        checks[f"{label} - No Statistical Outliers (IQR)"] = True
+                else:
+                    checks[f"{label} - No Statistical Outliers (IQR)"] = None
 
         elif role == "datetime":
-            add_check(
-                f"{label} - Valid Date Format",
-                True,
-                lambda s=series: pd.to_datetime(s, errors="coerce").notna().sum() == s.notna().sum()
-            )
+            add(f"{label} - Valid Date Format", lambda c=col: pd.to_datetime(
+                df[c], errors="coerce").notna().sum() == df[c].notna().sum())
 
         elif role == "email":
-            add_check(
-                f"{label} - Valid Email Format",
-                True,
-                lambda s=series: s.dropna().astype(str).str.match(EMAIL_RE).all()
-            )
+            add(f"{label} - Valid Email Format", lambda c=col: _gx_expectation(
+                validator, "expect_column_values_to_match_regex", column=c,
+                regex=EMAIL_RE.pattern
+            ))
 
         elif role == "phone":
-            add_check(
-                f"{label} - Valid Phone Format",
-                True,
-                lambda s=series: s.dropna().astype(str).str.match(PHONE_RE).all()
-            )
+            add(f"{label} - Valid Phone Format", lambda c=col: _gx_expectation(
+                validator, "expect_column_values_to_match_regex", column=c,
+                regex=PHONE_RE.pattern
+            ))
 
         elif role == "categorical":
-            add_check(
-                f"{label} - Consistent Category Formatting",
-                True,
-                lambda s=series: _no_case_whitespace_duplicates(s)
-            )
+            add(f"{label} - Consistent Category Formatting",
+                lambda c=col: _no_case_whitespace_duplicates(df[c]))
 
-        # role == "text": only the Not Null check above applies —
-        # free text has no further generic rule that's safe to assume
-
-    # ---------------- DATASET-LEVEL CHECKS (always run, schema-agnostic) ----------------
-    add_check("Dataset Not Empty", True, lambda: total_rows > 0)
-    add_check("No Fully Duplicate Rows", True, lambda: df.duplicated().sum() == 0)
-    add_check("No Completely Empty Columns", True, lambda: not df.isnull().all().any())
-    add_check("No Completely Empty Rows", True, lambda: not df.isnull().all(axis=1).any())
-
+    add("Dataset Not Empty", lambda: total_rows > 0)
+    add("No Fully Duplicate Rows", lambda: int(df.duplicated().sum()) == 0)
+    add("No Completely Empty Columns", lambda: not df.isnull().all().any())
+    add("No Completely Empty Rows", lambda: not df.isnull().all(axis=1).any())
     return checks
 
 
 def print_validation_report(checks):
-
     print("\n" + "=" * 60)
     print("               DATA VALIDATION REPORT")
     print("=" * 60)
-
     for rule, status in checks.items():
-
-        if status is True:
-            result = "PASS"
-
-        elif status is False:
-            result = "FAIL"
-
-        else:
-            result = "SKIPPED"
-
+        result = "PASS" if status is True else "FAIL" if status is False else "SKIPPED"
         print(f"{rule:<45}: {result}")
 
     executed = sum(v is not None for v in checks.values())
     passed = sum(v is True for v in checks.values())
     failed = sum(v is False for v in checks.values())
     skipped = sum(v is None for v in checks.values())
-
-    success_rate = (
-        (passed / executed) * 100
-        if executed
-        else 0
-    )
-
+    success_rate = (passed / executed) * 100 if executed else 0
     print("\n" + "=" * 60)
     print("                 VALIDATION SUMMARY")
     print("=" * 60)

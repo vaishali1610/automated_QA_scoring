@@ -1,24 +1,25 @@
+import os
 import time
-
 from google import genai
 from google.genai import errors
-from config import GEMINI_API_KEY
 
-client = genai.Client(api_key=GEMINI_API_KEY)
-
-# Tried in order. If one is retired/unavailable/overloaded, the next is used.
 MODEL_FALLBACKS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
     "gemini-2.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
 ]
+MAX_RETRIES_PER_MODEL = 2
+BASE_BACKOFF_SECONDS = 2
 
-MAX_RETRIES_PER_MODEL = 2  # quick retries before moving to the next model
-BASE_BACKOFF_SECONDS = 2   # 2s, 4s, ...
+
+def _client():
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
+    return genai.Client(api_key=api_key)
 
 
 def generate_report(profile, validation, scores, prediction):
-
     prompt = f"""
 You are a Data Quality Expert.
 
@@ -35,57 +36,37 @@ Quality Scores:
 Completeness: {scores['completeness']}%
 Consistency: {scores['consistency']}%
 Accuracy: {scores['accuracy']}%
+Timeliness: {scores['timeliness']}%
 Trust Score: {scores['trust_score']}%
 
-Predicted Dataset Quality:
-{prediction}
+Predicted Dataset Quality: {prediction}
 
-Generate the report in Markdown.
-
-Rules:
-- Use Markdown headings.
-- Leave one blank line after every heading.
-- Each bullet point must be on a separate line.
-- Keep each sentence under 80 characters.
-- Do not create long paragraphs.
-- Insert line breaks where appropriate.
-
-Sections:
+Generate a concise Markdown report with these sections:
 1. Overall Summary
 2. Major Data Quality Issues
 3. Recommendations
+Keep every sentence under 80 characters and every bullet on its own line.
 """
 
+    client = _client()
     last_error = None
-
     for model_name in MODEL_FALLBACKS:
         for attempt in range(1, MAX_RETRIES_PER_MODEL + 1):
             try:
                 response = client.models.generate_content(
                     model=model_name,
-                    contents=prompt
+                    contents=prompt,
                 )
                 return response.text
-
-            except errors.ClientError as e:
-                # e.g. 404 model retired/not found - no point retrying this model
-                print(f"{model_name} unavailable ({e}). Trying next model...")
-                last_error = e
+            except errors.ClientError as exc:
+                last_error = exc
+                print(f"{model_name} unavailable. Trying next model...")
                 break
-
-            except errors.ServerError as e:
-                # e.g. 503 overloaded - worth a couple of quick retries first
-                last_error = e
+            except errors.ServerError as exc:
+                last_error = exc
                 if attempt < MAX_RETRIES_PER_MODEL:
-                    wait_time = BASE_BACKOFF_SECONDS ** attempt
-                    print(
-                        f"{model_name} busy (attempt {attempt}/{MAX_RETRIES_PER_MODEL}), "
-                        f"retrying in {wait_time}s..."
-                    )
-                    time.sleep(wait_time)
+                    time.sleep(BASE_BACKOFF_SECONDS ** attempt)
                 else:
-                    print(f"{model_name} still unavailable after retries. Trying next model...")
+                    print(f"{model_name} unavailable after retries. Trying next model...")
 
-    raise RuntimeError(
-        f"All Gemini models failed. Last error: {last_error}"
-    )
+    raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")

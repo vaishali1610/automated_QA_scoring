@@ -1,38 +1,31 @@
 import random
 import pandas as pd
 
-def generate_row(quality):
-    if quality == "Excellent":
-        low, high = 90, 100
-    elif quality == "Good":
-        low, high = 75, 89
-    elif quality == "Moderate":
-        low, high = 60, 74
-    else:  # Poor - widened to 0 so the model has seen genuinely broken data
-        low, high = 0, 59
+QUALITY_BANDS = {
+    "Good": (75, 100),
+    "Moderate": (50, 74),
+    "Poor": (0, 49),
+}
 
-    # generate 4 scores whose average lands in the target band
-    target_avg = random.uniform(low, high)
-    # small spread around the target average, clipped to valid 0-100 range
-    completeness = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
-    consistency  = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
-    accuracy     = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
-    timeliness   = round(min(100, max(0, target_avg + random.uniform(-8, 8))))
 
-    trust_score = round((completeness + consistency + accuracy + timeliness) / 4, 2)
-    return [completeness, consistency, accuracy, timeliness, trust_score, quality]
+def quality_from_trust_score(trust_score):
+    if trust_score >= 75:
+        return "Good"
+    if trust_score >= 50:
+        return "Moderate"
+    return "Poor"
 
-qualities = ["Excellent", "Good", "Moderate", "Poor"]
-rows_per_class = 50  # → 200 total rows, evenly balanced
 
-data = []
-for quality in qualities:
-    for _ in range(rows_per_class):
-        data.append(generate_row(quality))
+def generate_row():
+    scores = [random.randint(0, 100) for _ in range(4)]
+    trust_score = round(sum(scores) / 4, 2)
+    quality = quality_from_trust_score(trust_score)
+    return [*scores, trust_score, quality]
 
-random.shuffle(data)
 
-df = pd.DataFrame(data, columns=[
+random.seed(123)
+rows = [generate_row() for _ in range(600)]
+df = pd.DataFrame(rows, columns=[
     "completeness", "consistency", "accuracy", "timeliness", "trust_score", "quality"
 ])
 df.to_csv("data/training_data.csv", index=False)

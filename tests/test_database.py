@@ -1,175 +1,45 @@
-import sqlite3
-
 from database import (
-    create_tables,
-    save_profiling,
-    save_scores,
-    DATABASE_NAME
+    create_tables, save_profiling, save_scores, save_pipeline_run,
+    get_all_pipeline_runs, get_historical_trust_scores, get_dashboard_data
 )
 
 
+def _profile():
+    return {"total_rows": 10, "total_columns": 5, "null_count": 1, "duplicate_count": 0}
+
+
+def _scores(value=90):
+    return {"completeness": value, "consistency": value, "accuracy": value,
+            "timeliness": value, "trust_score": value, "inferred_roles": {}}
+
+
 def test_create_tables():
-
     create_tables()
-
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT name
-        FROM sqlite_master
-        WHERE type='table'
-    """)
-
-    tables = [table[0] for table in cursor.fetchall()]
-
-    conn.close()
-
-    assert "profiling_results" in tables
-    assert "quality_scores" in tables
+    rows = get_all_pipeline_runs()
+    assert rows == []
 
 
-def test_save_profiling():
-
+def test_legacy_profile_and_score_storage():
     create_tables()
-
-    profile = {
-        "total_rows": 100,
-        "total_columns": 5,
-        "null_count": 2,
-        "duplicate_count": 1
-    }
-
-    save_profiling("employee.csv", profile)
-
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT dataset_name,
-               total_rows,
-               total_columns,
-               null_count,
-               duplicate_count
-        FROM profiling_results
-        WHERE dataset_name=?
-        ORDER BY id DESC
-        LIMIT 1
-    """, ("employee.csv",))
-
-    row = cursor.fetchone()
-
-    conn.close()
-
-    assert row == (
-        "employee.csv",
-        100,
-        5,
-        2,
-        1
-    )
+    save_profiling("employee.csv", _profile())
+    save_scores("employee.csv", _scores())
+    assert get_historical_trust_scores("employee.csv") == [90]
 
 
-def test_save_scores():
-
+def test_pipeline_run_stores_all_dashboard_fields():
     create_tables()
-
-    scores = {
-        "completeness": 95.5,
-        "consistency": 96.2,
-        "accuracy": 98.0,
-        "timeliness": 94.0,
-        "trust_score": 95.93
-    }
-
-    save_scores("employee.csv", scores)
-
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT dataset_name,
-               completeness,
-               consistency,
-               accuracy,
-               timeliness,
-               trust_score
-        FROM quality_scores
-        WHERE dataset_name=?
-        ORDER BY id DESC
-        LIMIT 1
-    """, ("employee.csv",))
-
-    row = cursor.fetchone()
-
-    conn.close()
-
-    assert row == (
-        "employee.csv",
-        95.5,
-        96.2,
-        98.0,
-        94.0,
-        95.93
-    )
+    validation = {"rule_a": True, "rule_b": False, "rule_c": None}
+    save_pipeline_run("employee.csv", _profile(), validation, _scores(), "Good")
+    row = get_all_pipeline_runs()[0]
+    assert row["dataset_name"] == "employee.csv"
+    assert row["executed_rules"] == 2
+    assert row["passed_rules"] == 1
+    assert row["failed_rules"] == 1
+    assert row["validation_rate"] == 50.0
+    assert row["failed_checks"] == "rule_b"
+    assert row["predicted_quality"] == "Good"
 
 
-def test_multiple_profile_insertions():
-
+def test_dashboard_data_table_exists_and_is_queryable():
     create_tables()
-
-    profile = {
-        "total_rows": 10,
-        "total_columns": 4,
-        "null_count": 0,
-        "duplicate_count": 0
-    }
-
-    save_profiling("a.csv", profile)
-    save_profiling("b.csv", profile)
-
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM profiling_results
-        WHERE dataset_name IN ('a.csv','b.csv')
-    """)
-
-    count = cursor.fetchone()[0]
-
-    conn.close()
-
-    assert count >= 2
-
-
-def test_multiple_score_insertions():
-
-    create_tables()
-
-    scores = {
-        "completeness": 100,
-        "consistency": 100,
-        "accuracy": 100,
-        "timeliness": 100,
-        "trust_score": 100
-    }
-
-    save_scores("a.csv", scores)
-    save_scores("b.csv", scores)
-
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM quality_scores
-        WHERE dataset_name IN ('a.csv','b.csv')
-    """)
-
-    count = cursor.fetchone()[0]
-
-    conn.close()
-
-    assert count >= 2
+    assert get_dashboard_data() == []

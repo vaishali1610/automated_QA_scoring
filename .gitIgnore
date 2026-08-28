@@ -1,5 +1,7 @@
-logs.logs
-dataset_quality_model.pkl
-config.py
-/dashboards
-/data
+__pycache__/
+.pytest_cache/
+.coverage
+*.pyc
+*.log
+.env
+.venv/
