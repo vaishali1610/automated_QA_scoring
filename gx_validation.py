@@ -3,7 +3,17 @@ import great_expectations as ge
 from column_inference import infer_column_roles, EMAIL_RE, PHONE_RE
 
 NAMED_OVERRIDES = {"age": {"min": 0, "max": 120}}
+def find_column(df, aliases):
+    """Return the first column matching any alias, case/whitespace-insensitively."""
+    normalized = {str(c).strip().lower(): c for c in df.columns}
 
+    for alias in aliases:
+        match = normalized.get(str(alias).strip().lower())
+
+        if match is not None:
+            return match
+
+    return None
 
 def _no_case_whitespace_duplicates(series):
     non_null = series.dropna().astype(str)

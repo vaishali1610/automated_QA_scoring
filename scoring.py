@@ -6,7 +6,17 @@ from column_inference import infer_column_roles
 NAMED_OVERRIDES = {
     "age": {"min": 0, "max": 120},
 }
+def find_column(df, aliases):
+    """Return the first column matching any alias, case/whitespace-insensitively."""
+    normalized = {str(c).strip().lower(): c for c in df.columns}
 
+    for alias in aliases:
+        match = normalized.get(str(alias).strip().lower())
+
+        if match is not None:
+            return match
+
+    return None
 
 def find_named_column(df, name):
     normalized = {str(c).strip().lower(): c for c in df.columns}
