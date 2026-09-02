@@ -4004,3 +4004,142 @@ er, f"{metric.capitalize()} is", len(result))
 2026-08-28 19:13:08,835:INFO:Preloading libraries
 2026-08-28 19:13:08,835:INFO:Set up data.
 2026-08-28 19:13:08,844:INFO:Set up index.
+2026-09-02 18:51:57,024:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:51:57,024:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:51:57,024:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:51:57,024:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:56:35,607:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:56:35,609:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:56:35,609:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:56:35,609:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 18:57:01,348:WARNING:C:\Users\vaishali.balasubrama\AppData\Roaming\Python\Python310\site-packages\google\api_core\_python_version_support.py:255: FutureWarning: You are using a Python version (3.10.0) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+
+2026-09-02 19:00:30,815:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:00:30,815:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:00:30,815:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:00:30,815:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:00:36,716:WARNING:C:\Users\vaishali.balasubrama\AppData\Roaming\Python\Python310\site-packages\google\api_core\_python_version_support.py:255: FutureWarning: You are using a Python version (3.10.0) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+
+2026-09-02 19:01:39,277:INFO:Initializing load_model()
+2026-09-02 19:01:39,277:INFO:load_model(model_name=dataset_quality_model, platform=None, authentication=None, verbose=True)
+2026-09-02 19:01:39,439:INFO:Initializing predict_model()
+2026-09-02 19:01:39,439:INFO:predict_model(self=<pycaret.classification.oop.ClassificationExperiment object at 0x000002150ABE1300>, estimator=Pipeline(memory=Memory(location=None),
+         steps=[('label_encoding',
+                 TransformerWrapperWithInverse(transformer=LabelEncoder())),
+                ('numerical_imputer',
+                 TransformerWrapper(include=['completeness', 'consistency',
+                                             'accuracy', 'timeliness',
+                                             'trust_score'],
+                                    transformer=SimpleImputer())),
+                ('categorical_imputer',
+                 TransformerWrapper(include=[],
+                                    transformer=SimpleImputer(strategy='most_frequent'))),
+                ('trained_model', DecisionTreeClassifier(random_state=123))]), probability_threshold=None, encoded_labels=False, raw_score=False, round=4, verbose=True, ml_usecase=None, preprocess=True, encode_labels=<function _SupervisedExperiment.predict_model.<locals>.encode_labels at 0x000002150AC5D360>)
+2026-09-02 19:01:39,439:INFO:Checking exceptions
+2026-09-02 19:01:39,439:INFO:Preloading libraries
+2026-09-02 19:01:39,440:INFO:Set up data.
+2026-09-02 19:01:39,443:INFO:Set up index.
+2026-09-02 19:11:47,751:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:11:47,751:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:11:47,751:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:11:47,751:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:11:54,183:WARNING:C:\Users\vaishali.balasubrama\AppData\Roaming\Python\Python310\site-packages\google\api_core\_python_version_support.py:255: FutureWarning: You are using a Python version (3.10.0) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+
+2026-09-02 19:12:59,332:INFO:Initializing load_model()
+2026-09-02 19:12:59,332:INFO:load_model(model_name=dataset_quality_model, platform=None, authentication=None, verbose=True)
+2026-09-02 19:12:59,473:INFO:Initializing predict_model()
+2026-09-02 19:12:59,480:INFO:predict_model(self=<pycaret.classification.oop.ClassificationExperiment object at 0x0000013B54F7A1A0>, estimator=Pipeline(memory=Memory(location=None),
+         steps=[('label_encoding',
+                 TransformerWrapperWithInverse(transformer=LabelEncoder())),
+                ('numerical_imputer',
+                 TransformerWrapper(include=['completeness', 'consistency',
+                                             'accuracy', 'timeliness',
+                                             'trust_score'],
+                                    transformer=SimpleImputer())),
+                ('categorical_imputer',
+                 TransformerWrapper(include=[],
+                                    transformer=SimpleImputer(strategy='most_frequent'))),
+                ('trained_model', DecisionTreeClassifier(random_state=123))]), probability_threshold=None, encoded_labels=False, raw_score=False, round=4, verbose=True, ml_usecase=None, preprocess=True, encode_labels=<function _SupervisedExperiment.predict_model.<locals>.encode_labels at 0x0000013B54F0B130>)
+2026-09-02 19:12:59,480:INFO:Checking exceptions
+2026-09-02 19:12:59,480:INFO:Preloading libraries
+2026-09-02 19:12:59,480:INFO:Set up data.
+2026-09-02 19:12:59,485:INFO:Set up index.
+2026-09-02 19:18:39,197:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:18:39,197:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:18:39,197:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:18:39,197:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:18:46,938:WARNING:C:\Users\vaishali.balasubrama\AppData\Roaming\Python\Python310\site-packages\google\api_core\_python_version_support.py:255: FutureWarning: You are using a Python version (3.10.0) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+
+2026-09-02 19:19:54,927:INFO:Initializing load_model()
+2026-09-02 19:19:54,927:INFO:load_model(model_name=dataset_quality_model, platform=None, authentication=None, verbose=True)
+2026-09-02 19:19:55,045:INFO:Initializing predict_model()
+2026-09-02 19:19:55,045:INFO:predict_model(self=<pycaret.classification.oop.ClassificationExperiment object at 0x0000027F494037C0>, estimator=Pipeline(memory=Memory(location=None),
+         steps=[('label_encoding',
+                 TransformerWrapperWithInverse(transformer=LabelEncoder())),
+                ('numerical_imputer',
+                 TransformerWrapper(include=['completeness', 'consistency',
+                                             'accuracy', 'timeliness',
+                                             'trust_score'],
+                                    transformer=SimpleImputer())),
+                ('categorical_imputer',
+                 TransformerWrapper(include=[],
+                                    transformer=SimpleImputer(strategy='most_frequent'))),
+                ('trained_model', DecisionTreeClassifier(random_state=123))]), probability_threshold=None, encoded_labels=False, raw_score=False, round=4, verbose=True, ml_usecase=None, preprocess=True, encode_labels=<function _SupervisedExperiment.predict_model.<locals>.encode_labels at 0x0000027F4971B130>)
+2026-09-02 19:19:55,045:INFO:Checking exceptions
+2026-09-02 19:19:55,045:INFO:Preloading libraries
+2026-09-02 19:19:55,045:INFO:Set up data.
+2026-09-02 19:19:55,048:INFO:Set up index.
+2026-09-02 19:22:38,737:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:22:38,737:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:22:38,737:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:22:38,737:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2026-09-02 19:22:46,356:WARNING:C:\Users\vaishali.balasubrama\AppData\Roaming\Python\Python310\site-packages\google\api_core\_python_version_support.py:255: FutureWarning: You are using a Python version (3.10.0) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+
+2026-09-02 19:23:52,850:INFO:Initializing load_model()
+2026-09-02 19:23:52,851:INFO:load_model(model_name=dataset_quality_model, platform=None, authentication=None, verbose=True)
+2026-09-02 19:23:52,971:INFO:Initializing predict_model()
+2026-09-02 19:23:52,972:INFO:predict_model(self=<pycaret.classification.oop.ClassificationExperiment object at 0x0000029936DAA5F0>, estimator=Pipeline(memory=Memory(location=None),
+         steps=[('label_encoding',
+                 TransformerWrapperWithInverse(transformer=LabelEncoder())),
+                ('numerical_imputer',
+                 TransformerWrapper(include=['completeness', 'consistency',
+                                             'accuracy', 'timeliness',
+                                             'trust_score'],
+                                    transformer=SimpleImputer())),
+                ('categorical_imputer',
+                 TransformerWrapper(include=[],
+                                    transformer=SimpleImputer(strategy='most_frequent'))),
+                ('trained_model', DecisionTreeClassifier(random_state=123))]), probability_threshold=None, encoded_labels=False, raw_score=False, round=4, verbose=True, ml_usecase=None, preprocess=True, encode_labels=<function _SupervisedExperiment.predict_model.<locals>.encode_labels at 0x00000299370AF130>)
+2026-09-02 19:23:52,972:INFO:Checking exceptions
+2026-09-02 19:23:52,972:INFO:Preloading libraries
+2026-09-02 19:23:52,972:INFO:Set up data.
+2026-09-02 19:23:52,976:INFO:Set up index.
