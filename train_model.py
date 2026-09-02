@@ -1,3 +1,5 @@
+import os
+import tempfile
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -18,7 +20,13 @@ from sklearn.metrics import (
     f1_score
 )
 
-mlflow.set_tracking_uri("file:./mlruns")
+mlflow_dir = os.path.join(tempfile.gettempdir(), "mlruns")
+os.makedirs(mlflow_dir, exist_ok=True)
+
+mlflow.set_tracking_uri(
+    f"file:{os.path.abspath(mlflow_dir)}"
+)
+
 mlflow.set_experiment("DataQuality_Classification")
 
 df = pd.read_csv("data/training_data.csv")
